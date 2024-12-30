@@ -155,9 +155,10 @@ func requestSignServer(url string, data map[string]string) (string, []byte, erro
 	if !strings.HasPrefix(url, signServer.URL) {
 		url = strings.TrimSuffix(signServer.URL, "/") + "/" + strings.TrimPrefix(url, "/")
 	}
-	if headers == nil {
-		headers = map[string]string{}
-	}
+	/*
+		if headers == nil {
+			headers = map[string]string{}
+		}*/
 	auth := signServer.Authorization
 	if auth != "-" && auth != "" {
 		headers["Authorization"] = auth

@@ -225,7 +225,6 @@ func (bot *CQBot) guildMessageReactionsUpdatedEvent(c *client.QQClient, e *clien
 	if len(e.CurrentReactions) == 0 {
 		str += "无任何表情"
 	}
-	log.Infof(str)
 	bot.dispatchEvent("notice/message_reactions_updated", global.MSG{
 		"guild_id":          fU64(e.GuildId),
 		"channel_id":        fU64(e.ChannelId),

@@ -357,8 +357,8 @@ func LoginInteract() {
 		}
 		log.Warnf("Bot已离线: %v", e.Message)
 		if !e.Reconnection {
-			log.Infof("当前登录已挂起，请按下回车重新登录！[Enter 继续]")
-			readLine()
+			log.Infof("当前登录已挂起，请按下回车重新登录 [Enter 继续/300s后自动重试]")
+			readLineTimeout(time.Second * time.Duration(300))
 		} else {
 			time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
 		}
