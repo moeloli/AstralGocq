@@ -36,10 +36,12 @@ type SignServerManager struct {
 	client   *SignClient
 }
 
+// NewSignServerManager creates a new SignServerManager instance.
 func NewSignServerManager(client *SignClient) *SignServerManager {
 	return &SignServerManager{client: client}
 }
 
+// Get returns the current sign server.
 func (m *SignServerManager) Get() *config.SignServer {
 	if len(base.SignServers) == 1 {
 		return &base.SignServers[0]
@@ -47,6 +49,7 @@ func (m *SignServerManager) Get() *config.SignServer {
 	return m.current.Load()
 }
 
+// Set updates the current sign server.
 func (m *SignServerManager) Set(server *config.SignServer) {
 	if server == nil {
 		cur := m.current.Load()
@@ -57,14 +60,17 @@ func (m *SignServerManager) Set(server *config.SignServer) {
 	m.current.Store(server)
 }
 
+// IncrementErrorCount increases the error count by one.
 func (m *SignServerManager) IncrementErrorCount() {
 	m.errCount.Add(1)
 }
 
+// HasOver checks if the error count exceeds the specified value.
 func (m *SignServerManager) HasOver(count uintptr) bool {
 	return m.errCount.Load() > count
 }
 
+// GetAvailableSignServer retrieves an available sign server or returns an error if none are available.
 func (m *SignServerManager) GetAvailableSignServer() (*config.SignServer, error) {
 	s := m.Get()
 	if s != nil {
@@ -136,6 +142,7 @@ type SignClient struct {
 	requestMu sync.Mutex
 }
 
+// NewSignClient creates a new SignClient instance.
 func NewSignClient(c *client.QQClient) *SignClient {
 	signClient := &SignClient{client: c, requests: make(map[string]chan map[string]interface{})}
 	signClient.manager = NewSignServerManager(signClient)
@@ -355,6 +362,8 @@ func (c *SignClient) signSubmit(uin string, cmd string, callbackID int64, buffer
 		log.Warnf("Error submitting callback: %v. server: %v", err, signServer)
 	}
 }
+
+// SignWhiteList retrieves the sign whitelist.
 func (c *SignClient) SignWhiteList() (whitelist []string, err error) {
 	_, response, err := c.requestSignServer(
 		"cmd_whitelist",
@@ -370,9 +379,8 @@ func (c *SignClient) SignWhiteList() (whitelist []string, err error) {
 			stringResults[i] = result.String()
 		}
 		return stringResults, nil
-	} else {
-		return nil, errors.New("get whitelist failed")
 	}
+	return nil, errors.New("get whitelist failed")
 }
 func (c *SignClient) signRegister() {
 	signServer, resp, err := c.requestSignServer(
@@ -391,6 +399,7 @@ func (c *SignClient) signRegister() {
 	log.Infof("Successfully registered QQ instance %v: %v", c.client.Uin, msg)
 }
 
+// Energy requests energy data from the sign server.
 func (c *SignClient) Energy(id string, sdkVersion string, salt []byte) ([]byte, error) {
 	signServer, response, err := c.requestSignServer(
 		"custom_energy",
@@ -417,6 +426,7 @@ func (c *SignClient) Energy(id string, sdkVersion string, salt []byte) ([]byte, 
 	return data, nil
 }
 
+// Sign sends a sign request and returns the sign, extra, and token data.
 func (c *SignClient) Sign(seq uint64, uin string, cmd string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	i := 0
 	for {

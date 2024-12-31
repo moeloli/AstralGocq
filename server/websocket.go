@@ -217,6 +217,7 @@ func runWSClient(b *coolq.CQBot, node yaml.Node) {
 	}
 }
 
+// ResolveURI parses the given address and returns the network and address strings.
 func ResolveURI(addr string) (network, address string) {
 	network, address = "tcp", addr
 	uri, err := url.Parse(addr)
