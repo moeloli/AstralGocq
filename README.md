@@ -6,19 +6,22 @@
 
 <div align="center">
 
-# go-cqhttp
+# Astral-Gocq
 
-_✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://github.com/ProtocolScience/AstralGo) 的 [OneBot](https://github.com/howmanybots/onebot/blob/master/README.md) Golang 原生实现 ✨_  
+_✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://github.com/ProtocolScience/AstralGo) 的 [OneBot](https://github.com/howmanybots/onebot/blob/master/README.md) Golang Android NT协议原生实现 ✨_  
 
+本项目部分参考 [Lagrange](https://github.com/Linwenxuan05/Lagrange.Core/)
+
+致敬原项目 [gocq-http](https://github.com/Mrs4s/go-cqhttp)
 
 </div>
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/Mrs4s/go-cqhttp/master/LICENSE">
-    <img src="https://img.shields.io/github/license/Mrs4s/go-cqhttp" alt="license">
+  <a href="https://raw.githubusercontent.com/ProtocolScience/AstralGocq/master/LICENSE">
+    <img src="https://img.shields.io/github/license/ProtocolScience/AstralGocq" alt="license">
   </a>
   <a href="https://github.com/ProtocolScience/AstralGocq/releases">
-    <img src="https://img.shields.io/github/v/release/Mrs4s/go-cqhttp?color=blueviolet&include_prereleases" alt="release">
+    <img src="https://img.shields.io/github/v/release/ProtocolScience/AstralGocq?color=blueviolet&include_prereleases" alt="release">
   </a>
 <a href="https://app.fossa.com/projects/git%2Bgithub.com%2FMrs4s%2Fgo-cqhttp?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FMrs4s%2Fgo-cqhttp.svg?type=shield"/></a>
   <a href="https://github.com/howmanybots/onebot/blob/master/README.md">
@@ -43,7 +46,9 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
 </p>
 
 ## 兼容性
-go-cqhttp 兼容 [OneBot-v11](https://github.com/botuniverse/onebot-11) 绝大多数内容，并在其基础上做了一些扩展，详情请看 go-cqhttp 的文档。
+go-cqhttp 兼容 [OneBot-v11](https://github.com/botuniverse/onebot-11) 绝大多数内容，并在其基础上做了一些扩展，详情请看的文档。
+
+由于迁移至NT协议，不确定某些event是否失效，如果出现问题，请提供debug日志反馈。
 
 ### 接口
 
