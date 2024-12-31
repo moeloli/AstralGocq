@@ -12,8 +12,7 @@ jobs:
       - name: Checkout
         run: |
           git version
-          git clone "${{ github.event.repository.html_url }}" /home/runner/work/go-cqhttp/go-cqhttp
-          cd  /home/runner/work/go-cqhttp/go-cqhttp
+          git clone "${{ github.event.repository.html_url }}" /home/runner/work/AstralGocq/AstralGocq
           git checkout "${{ github.ref }}"
 
       - name: Set up Go
