@@ -217,7 +217,7 @@ func runWSClient(b *coolq.CQBot, node yaml.Node) {
 	}
 }
 
-func resolveURI(addr string) (network, address string) {
+func ResolveURI(addr string) (network, address string) {
 	network, address = "tcp", addr
 	uri, err := url.Parse(addr)
 	if err == nil && uri.Scheme != "" {
@@ -246,7 +246,7 @@ func (c *websocketClient) connect(typ, addr string, conptr **wsConn) {
 		header["Authorization"] = []string{"Token " + c.token}
 	}
 
-	network, address := resolveURI(addr)
+	network, address := ResolveURI(addr)
 	dialer := websocket.Dialer{
 		NetDial: func(_, addr string) (net.Conn, error) {
 			if network == "unix" {

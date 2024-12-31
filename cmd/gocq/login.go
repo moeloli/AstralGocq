@@ -26,6 +26,7 @@ func readLine() (str string) {
 	return
 }
 
+/*
 func readLineTimeout(t time.Duration) {
 	r := make(chan string)
 	go func() {
@@ -38,7 +39,7 @@ func readLineTimeout(t time.Duration) {
 	case <-r:
 	case <-time.After(t):
 	}
-}
+}*/
 
 func readIfTTY(de string) (str string) {
 	if isatty.Isatty(os.Stdin.Fd()) {

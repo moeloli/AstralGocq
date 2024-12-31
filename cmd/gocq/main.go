@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"github.com/ProtocolScience/AstralGo/wrapper"
 	"github.com/pkg/errors"
 
 	//	"github.com/ProtocolScience/AstralGocq/internal/download"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/ProtocolScience/AstralGo/binary"
 	"github.com/ProtocolScience/AstralGo/client"
-	"github.com/ProtocolScience/AstralGo/wrapper"
 	para "github.com/fumiama/go-hide-param"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	//	"github.com/pkg/errors"
@@ -165,17 +165,6 @@ func LoginInteract() {
 			log.Fatalf("加载设备信息失败: %v", err)
 		}
 	}
-	signServer, err := getAvaliableSignServer() // 获取可用签名服务器
-	if err != nil {
-		log.Warn(err)
-	}
-	if signServer != nil && len(signServer.URL) > 1 {
-		log.Infof("使用签名服务器：%v", signServer.URL)
-		wrapper.DandelionEnergy = energy
-		wrapper.FekitGetSign = sign
-	} else {
-		log.Warnf("警告: 未配置签名服务器或签名服务器不可用, 这可能会导致登录 45 错误码或发送消息被风控")
-	}
 
 	if base.Account.Encrypt {
 		if !global.PathExists("password.encrypt") {
@@ -234,6 +223,28 @@ func LoginInteract() {
 	log.Infof("使用协议: %s", device.Protocol.Version())
 	cli = newClient()
 	cli.UseDevice(device)
+
+	signClient := NewSignClient(cli)
+	signClientManager := signClient.manager
+	signServer, err := signClientManager.GetAvailableSignServer() // 获取可用签名服务器
+	if err != nil {
+		log.Warn(err)
+	}
+	if signServer != nil && len(signServer.URL) > 1 {
+		log.Infof("使用签名服务器：%v", signServer.URL)
+		wrapper.DandelionEnergy = func(_ uint64, id string, sdkVersion string, salt []byte) ([]byte, error) {
+			return signClient.Energy(id, sdkVersion, salt)
+		}
+		wrapper.FekitGetSign = func(seq uint64, uin string, cmd string, _ string, buff []byte) ([]byte, []byte, []byte, error) {
+			return signClient.Sign(seq, uin, cmd, buff)
+		}
+		wrapper.WhiteListGet = func() ([]string, error) {
+			return signClient.SignWhiteList()
+		}
+	} else {
+		log.Warnf("警告: 未配置签名服务器或签名服务器不可用, 这可能会导致登录 45 错误码或发送消息被风控")
+	}
+
 	isWatchProtocol := cli.Device().Protocol == 2
 	isQRCodeLogin := (base.Account.Uin == 0 || len(base.Account.Password) == 0) && !base.Account.Encrypt
 	isQRCodeLogin = isQRCodeLogin || isWatchProtocol //手表只能二维码登录
@@ -356,17 +367,18 @@ func LoginInteract() {
 			return
 		}
 		log.Warnf("Bot已离线: %v", e.Message)
+		if base.Reconnect.Disabled {
+			log.Warnf("未启用自动重连, 将退出.")
+			os.Exit(1)
+		}
 		if !e.Reconnection {
-			log.Infof("当前登录已挂起，请按下回车重新登录 [Enter 继续/300s后自动重试]")
-			readLineTimeout(time.Second * time.Duration(300))
+			log.Infof("当前登录已挂起，请按下回车重新登录 [Enter 继续]")
+			//readLineTimeout(time.Second * time.Duration(300))
+			readLine()
 		} else {
 			time.Sleep(time.Second * time.Duration(base.Reconnect.Delay))
 		}
 		for {
-			if base.Reconnect.Disabled {
-				log.Warnf("未启用自动重连, 将退出.")
-				os.Exit(1)
-			}
 			if times > base.Reconnect.MaxTimes && base.Reconnect.MaxTimes != 0 {
 				log.Fatalf("Bot重连次数超过限制, 停止")
 			}

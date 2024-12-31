@@ -324,7 +324,7 @@ func (c HTTPClient) Run() {
 		c.timeout = 5
 	}
 	rawAddress := c.addr
-	network, address := resolveURI(c.addr)
+	network, address := ResolveURI(c.addr)
 	client := &http.Client{
 		Timeout: time.Second * time.Duration(c.timeout),
 		Transport: &http.Transport{
