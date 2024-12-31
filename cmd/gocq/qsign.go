@@ -312,7 +312,7 @@ func (c *SignClient) signRequest(seq uint64, uin string, cmd string, buff []byte
 
 func (c *SignClient) signCallback(uin string, results []gjson.Result, t string) {
 	for {
-		if cli.Online.Load() {
+		if c.client.Online.Load() {
 			break
 		}
 		time.Sleep(1 * time.Second)
@@ -321,7 +321,7 @@ func (c *SignClient) signCallback(uin string, results []gjson.Result, t string) 
 		cmd := result.Get("cmd").String()
 		callbackID := result.Get("callbackId").Int()
 		body, _ := hex.DecodeString(result.Get("body").String())
-		ret, err := cli.SendSsoPacket(cmd, body)
+		ret, err := c.client.SendSsoPacket(cmd, body)
 		if err != nil || len(ret) == 0 {
 			log.Warnf("Callback error: %v, or response data is empty", err)
 			continue
