@@ -149,16 +149,13 @@ func isHTTPAvailable(url string) bool {
 		log.Warnf("HTTP check failed for %v, error: %v", url, err)
 		return false
 	}
+	bodyBytes, e := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
-
 	if resp.StatusCode == http.StatusOK {
-		// Assuming response body contains JSON with a "code" field
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err == nil && gjson.GetBytes(bodyBytes, "code").Int() == 0 {
+		if e == nil && gjson.GetBytes(bodyBytes, "code").Int() == 0 {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -184,7 +181,6 @@ func isWebSocketAvailable(url string) bool {
 type SignClient struct {
 	client    *client.QQClient
 	manager   *SignServerManager
-	lastToken string
 	ws        *websocket.Conn
 	requests  map[string]chan map[string]interface{}
 	requestMu sync.Mutex
@@ -501,10 +497,6 @@ func (c *SignClient) Sign(seq uint64, uin string, cmd string, buff []byte) (sign
 			continue
 		}
 		break
-	}
-	if tokenString := hex.EncodeToString(token); c.lastToken != tokenString {
-		log.Infof("Token updated: %v -> %v", c.lastToken, tokenString)
-		c.lastToken = tokenString
 	}
 	rule := base.Account.RuleChangeSignServer
 	if (len(sign) == 0 && rule >= 1) || (len(token) == 0 && rule >= 2) {

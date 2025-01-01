@@ -35,7 +35,7 @@ account: # 账号相关
     #- url: 'ws://183.131.51.152:7860/ws'  # 备用
     #  key: 'selfshare'
     #  authorization: '-'
-    - url: 'wss:///qsign.trpgbot.com'  # 备用
+    - url: 'wss://qsign.trpgbot.com/ws'  # 备用
       key: 'selfshare'
       authorization: '-'
     - url: 'https://qsign.trpgbot.com'  # 主签名服务器地址， 必填
@@ -45,6 +45,9 @@ account: # 账号相关
       key: 'selfshare'
       authorization: '-' 
     - url: 'https://zyr15r-astralqsign.hf.space'  # 备用
+      key: 'selfshare'
+      authorization: '-'
+    - url: 'https://qsign.chahuyun.cn'  # 备用
       key: 'selfshare'
       authorization: '-'
   # 判断签名服务不可用（需要切换）的额外规则
