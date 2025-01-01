@@ -134,7 +134,7 @@ func isServerAvailable(signServer string) bool {
 	case "ws", "wss":
 		return isWebSocketAvailable(signServer)
 	default:
-		log.Error("Unsupported protocol: %v", parsedURL.Scheme)
+		log.Errorf("Unsupported protocol: %v", parsedURL.Scheme)
 		return false
 	}
 }
@@ -149,9 +149,7 @@ func isHTTPAvailable(url string) bool {
 		log.Warnf("HTTP check failed for %v, error: %v", url, err)
 		return false
 	}
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(resp.Body)
+	_ = resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
 		// Assuming response body contains JSON with a "code" field
@@ -174,9 +172,7 @@ func isWebSocketAvailable(url string) bool {
 		log.Warnf("WebSocket check failed for %v, error: %v", url, err)
 		return false
 	}
-	defer func(conn *websocket.Conn) {
-		_ = conn.Close()
-	}(conn)
+	_ = conn.Close()
 
 	// Optionally, you can send a ping or some message to verify further
 
