@@ -101,24 +101,51 @@ func (m *SignServerManager) GetAvailableSignServer() (*config.SignServer, error)
 func (m *SignServerManager) asyncCheckServers(servers []config.SignServer) *config.SignServer {
 	var once sync.Once
 	var wg sync.WaitGroup
-	wg.Add(len(servers))
-	for i, s := range servers {
-		go func(i int, server config.SignServer) {
-			defer wg.Done()
-			log.Infof("Checking server: %v (%v/%v)", server.URL, i+1, len(servers))
-			if len(server.URL) < 4 {
-				return
-			}
-			if isServerAvailable(server.URL) {
-				once.Do(func() {
-					m.Set(&server)
-					log.Infof("Using server url=%v, key=%v, auth=%v", server.URL, server.Key, server.Authorization)
-					m.client.signRegister()
-				})
-			}
-		}(i, s)
+
+	// Separate servers based on protocol
+	var wsServers []config.SignServer
+	var httpServers []config.SignServer
+
+	for _, s := range servers {
+		if len(s.URL) < 4 {
+			continue
+		}
+		if strings.HasPrefix(s.URL, "ws") {
+			wsServers = append(wsServers, s)
+		} else if strings.HasPrefix(s.URL, "http") {
+			httpServers = append(httpServers, s)
+		}
 	}
-	wg.Wait()
+
+	checkServers := func(servers []config.SignServer) bool {
+		success := false
+		wg.Add(len(servers))
+		for i, s := range servers {
+			go func(i int, server config.SignServer) {
+				defer wg.Done()
+				if isServerAvailable(server.URL) {
+					log.Infof("Checking server: %v (%v/%v) ok!", server.URL, i+1, len(servers))
+					once.Do(func() {
+						m.Set(&server)
+						log.Infof("Using server url=%v, key=%v, auth=%v", server.URL, server.Key, server.Authorization)
+						m.client.signRegister()
+						success = true
+					})
+				} else {
+					log.Warnf("Checking server: %v (%v/%v) failed!", server.URL, i+1, len(servers))
+				}
+			}(i, s)
+		}
+		wg.Wait()
+		return success
+	}
+
+	// First, try ws/wss servers
+	if !checkServers(wsServers) {
+		// If all ws/wss servers fail, try http/https servers
+		checkServers(httpServers)
+	}
+
 	return m.Get()
 }
 
@@ -205,7 +232,7 @@ func (c *SignClient) requestSignServer(action string, data map[string]string) (s
 	}
 
 	data["key"] = signServer.Key
-	data["uin"] = strconv.FormatInt(c.client.Uin, 10)
+	data["uin"] = strconv.FormatInt(base.Account.Uin, 10)
 	data["qua"] = c.client.Device().Protocol.Version().QUA
 	data["android_id"] = utils.B2S(device.AndroidId)
 	data["guid"] = hex.EncodeToString(device.Guid)
@@ -440,7 +467,7 @@ func (c *SignClient) signRegister() {
 		log.Warnf("Error registering QQ instance: %v. server: %v", msg, signServer)
 		return
 	}
-	log.Infof("Successfully registered QQ instance %v: %v", c.client.Uin, msg)
+	log.Infof("Successfully registered QQ instance %v: %v", base.Account.Uin, msg)
 }
 
 // Energy requests energy data from the sign server.
@@ -475,8 +502,8 @@ func (c *SignClient) Sign(seq uint64, uin string, cmd string, buff []byte) (sign
 	i := 0
 	for {
 		sign, extra, token, err = c.signRequest(seq, uin, cmd, buff)
-		cs := c.manager.Get()
-		if cs == nil {
+		cs, e := c.manager.GetAvailableSignServer()
+		if e != nil || cs == nil {
 			err = errors.New("nil signserver")
 			log.Warn("nil sign-server")
 			return
@@ -484,7 +511,7 @@ func (c *SignClient) Sign(seq uint64, uin string, cmd string, buff []byte) (sign
 		if err != nil {
 			log.Warnf("Error getting sso sign: %v. server: %v", err, cs.URL)
 		}
-		if i > 0 {
+		if i > 5 {
 			break
 		}
 		i++
