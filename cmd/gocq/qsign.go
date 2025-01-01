@@ -247,7 +247,7 @@ func (c *SignClient) requestSignServer(action string, data map[string]string) (s
 	}
 
 	//HTTP ABOVE
-	url := strings.TrimSuffix(signServer.URL, "/") + "/" + strings.TrimPrefix(action, "/")
+	urlAddress := strings.TrimSuffix(signServer.URL, "/") + "/" + strings.TrimPrefix(action, "/")
 	auth := signServer.Authorization
 	if auth != "-" && auth != "" {
 		headers["Authorization"] = auth
@@ -260,7 +260,7 @@ func (c *SignClient) requestSignServer(action string, data map[string]string) (s
 	bodyString := bodyBytes.String()
 	bodyString = bodyString[:len(bodyString)-1]
 	body := bytes.NewBufferString(bodyString)
-	//log.Infof("POST: %s \n %s", url, bodyString)
+	//log.Infof("POST: %s \n %s", urlAddress, bodyString)
 	hash := md5.New()
 	hash.Write([]byte("37mWT8rCCNyT2Zi11ACT8pbhe8wCRSKG"))
 	hash.Write(body.Bytes())
@@ -269,7 +269,7 @@ func (c *SignClient) requestSignServer(action string, data map[string]string) (s
 	req := download.Request{
 		Method: http.MethodPost,
 		Header: headers,
-		URL:    url,
+		URL:    urlAddress,
 		Body:   body,
 	}.WithTimeout(time.Duration(base.SignServerTimeout) * time.Second)
 	resp, err := req.Bytes()
@@ -501,20 +501,20 @@ func (c *SignClient) Energy(id string, sdkVersion string, salt []byte) ([]byte, 
 func (c *SignClient) Sign(seq uint64, uin string, cmd string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
 	i := 0
 	for {
+		i++
+		if i > 5 {
+			log.Warn("too many tried sign")
+			return nil, nil, nil, errors.New("too many tried")
+		}
 		sign, extra, token, err = c.signRequest(seq, uin, cmd, buff)
 		cs, e := c.manager.GetAvailableSignServer()
 		if e != nil || cs == nil {
-			err = errors.New("nil signserver")
 			log.Warn("nil sign-server")
-			return
+			return sign, extra, token, errors.New("nil sign-server")
 		}
 		if err != nil {
 			log.Warnf("Error getting sso sign: %v. server: %v", err, cs.URL)
 		}
-		if i > 5 {
-			break
-		}
-		i++
 		if err == nil && len(sign) == 0 {
 			log.Debugf("Requesting sign: cmd=%v, qua=%v, buff=%v", seq, cmd, hex.EncodeToString(buff))
 			log.Debugf("Response: sign=%v, extra=%v, token=%v",
