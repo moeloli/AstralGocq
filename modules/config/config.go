@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -91,18 +92,23 @@ type Server struct {
 
 // Parse 从默认配置文件路径中获取
 func Parse(path string) *Config {
+	_, err := os.Stat(path)
+	if err != nil {
+		generateConfig()
+		fmt.Println("配置文件已生成，按Enter继续，或者Ctrl+C退出程序来手动修改配置文件")
+		_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
+	}
 	file, err := os.ReadFile(path)
 	config := &Config{}
 	if err == nil {
 		err = yaml.NewDecoder(strings.NewReader(expand(string(file), os.Getenv))).Decode(config)
-		if err != nil {
-			log.Fatal("配置文件不合法!", err)
+		if err == nil {
+			return config
 		}
-	} else {
-		generateConfig()
-		os.Exit(0)
 	}
-	return config
+	fmt.Println("配置文件不合法!", err)
+	os.Exit(1)
+	return nil
 }
 
 var serverconfs []*Server
@@ -140,9 +146,50 @@ func generateConfig() {
 			sb.WriteString(serverconfs[r].Default)
 		}
 	}
-	_ = os.WriteFile("config.yml", []byte(sb.String()), 0o644)
-	fmt.Println("默认配置文件已生成，请修改 config.yml 后重新启动!")
-	_, _ = input.ReadString('\n')
+
+	// Parse the YAML configuration
+	var config map[string]interface{}
+	err = yaml.Unmarshal([]byte(sb.String()), &config)
+	if err != nil {
+		log.Fatal("无法解析配置: ", err)
+	}
+	// Access nested map for account
+	if account, ok := config["account"].(map[string]interface{}); ok {
+		// Capture QQ account information
+		fmt.Print("请输入您的QQ账号: ")
+		uinStr, err := input.ReadString('\n')
+		if err != nil {
+			log.Fatal("输入不合法: ", err)
+		}
+		uinStr = strings.TrimSpace(uinStr)
+		uin, err := strconv.ParseInt(uinStr, 10, 64)
+		if err != nil {
+			log.Fatal("QQ账号必须是数字: ", err)
+		}
+		account["uin"] = uin
+
+		fmt.Print("请输入您的密码(可空): ")
+		password, err := input.ReadString('\n')
+		if err != nil {
+			log.Fatal("输入不合法: ", err)
+		}
+
+		account["password"] = strings.TrimSpace(password)
+
+		// Serialize the updated configuration back to YAML
+		updatedConfig, err := yaml.Marshal(&config)
+		if err != nil {
+			log.Fatal("无法序列化配置: ", err)
+		}
+
+		// Write the updated configuration to a file
+		err = os.WriteFile("config.yml", updatedConfig, 0o644)
+		if err != nil {
+			log.Fatal("无法写入配置文件: ", err)
+		}
+	} else {
+		log.Fatal("无法解析配置: ", err)
+	}
 }
 
 // expand 使用正则进行环境变量展开

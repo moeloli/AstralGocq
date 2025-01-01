@@ -156,6 +156,7 @@ func LoginInteract() {
 	if !global.PathExists("device.json") {
 		log.Warn("虚拟设备信息不存在, 将自动生成随机设备.")
 		device = client.GenRandomDevice()
+
 		_ = os.WriteFile("device.json", device.ToJson(), 0o644)
 		log.Info("已生成设备信息并保存到 device.json 文件.")
 	} else {
@@ -220,6 +221,13 @@ func LoginInteract() {
 		time.Sleep(time.Second * 5)
 	}
 	log.Info("开始尝试登录并同步消息...")
+	if base.Account.Password == "" && device.Protocol != client.AndroidWatch {
+		log.Warn("你用了空密码，因此你只能选手表协议！已自动把你变成手表...")
+		device.Protocol = client.AndroidWatch
+	} else if base.Account.Password != "" && device.Protocol == client.AndroidWatch {
+		log.Warn("你用了密码，但是手表协议不支持密码登录，已自动吞噬你的密码...")
+		base.Account.Password = ""
+	}
 	log.Infof("使用协议: %s", device.Protocol.Version())
 	cli = newClient()
 	cli.UseDevice(device)

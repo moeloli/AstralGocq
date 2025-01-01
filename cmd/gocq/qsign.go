@@ -12,8 +12,10 @@ import (
 	"github.com/ProtocolScience/AstralGocq/server"
 	"github.com/RomiChan/websocket"
 	"github.com/google/uuid"
+	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -121,15 +123,64 @@ func (m *SignServerManager) asyncCheckServers(servers []config.SignServer) *conf
 }
 
 func isServerAvailable(signServer string) bool {
-	resp, err := download.Request{
-		Method: http.MethodGet,
-		URL:    signServer,
-	}.WithTimeout(3 * time.Second).Bytes()
-	if err == nil && gjson.GetBytes(resp, "code").Int() == 0 {
-		return true
+	parsedURL, err := url.Parse(signServer)
+	if err != nil {
+		log.Warnf("Invalid URL: %v, error: %v", signServer, err)
+		return false
 	}
-	log.Warnf("Server %v may be unavailable, error: %v", signServer, err)
+	switch parsedURL.Scheme {
+	case "http", "https":
+		return isHTTPAvailable(signServer)
+	case "ws", "wss":
+		return isWebSocketAvailable(signServer)
+	default:
+		log.Error("Unsupported protocol: %v", parsedURL.Scheme)
+		return false
+	}
+}
+
+func isHTTPAvailable(url string) bool {
+	httpClient := http.Client{
+		Timeout: 3 * time.Second,
+	}
+
+	resp, err := httpClient.Get(url)
+	if err != nil {
+		log.Warnf("HTTP check failed for %v, error: %v", url, err)
+		return false
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+
+	if resp.StatusCode == http.StatusOK {
+		// Assuming response body contains JSON with a "code" field
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err == nil && gjson.GetBytes(bodyBytes, "code").Int() == 0 {
+			return true
+		}
+	}
+
 	return false
+}
+
+func isWebSocketAvailable(url string) bool {
+	dialer := websocket.Dialer{
+		HandshakeTimeout: 3 * time.Second,
+	}
+
+	conn, _, err := dialer.Dial(url, nil)
+	if err != nil {
+		log.Warnf("WebSocket check failed for %v, error: %v", url, err)
+		return false
+	}
+	defer func(conn *websocket.Conn) {
+		_ = conn.Close()
+	}(conn)
+
+	// Optionally, you can send a ping or some message to verify further
+
+	return true
 }
 
 // SignClient handles requests to the sign server.
