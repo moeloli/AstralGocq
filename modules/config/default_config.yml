@@ -32,7 +32,10 @@ account: # 账号相关
   # 
   # 服务器可使用docker在本地搭建或者使用他人开放的服务
   sign-servers:
-    - url: 'ws://183.131.51.152:7860/ws'  # 备用
+    #- url: 'ws://183.131.51.152:7860/ws'  # 备用
+    #  key: 'selfshare'
+    #  authorization: '-'
+    - url: 'wss:///qsign.trpgbot.com'  # 备用
       key: 'selfshare'
       authorization: '-'
     - url: 'https://qsign.trpgbot.com'  # 主签名服务器地址， 必填
