@@ -6,6 +6,8 @@ github.com/Microsoft/go-winio v0.6.2-0.20230724192519-b29bbd58a65a h1:aU1703IHxu
 github.com/Microsoft/go-winio v0.6.2-0.20230724192519-b29bbd58a65a/go.mod h1:OZqLNXdYJHmx7aqq/T6wAdFEdoGm5nmIfC4kU7M8P8o=
 github.com/ProtocolScience/AstralGo v0.0.0-20250104104015-77811d31b1ab h1:WWAHRDFdMpDCJm1PggN0vB+JhHCqfOzkqUuNBikG4F0=
 github.com/ProtocolScience/AstralGo v0.0.0-20250104104015-77811d31b1ab/go.mod h1:Wg8s7tsAsz9aTzQAcElBf9toTy1vU14AB9xmOiTQv7s=
+github.com/ProtocolScience/AstralGo v0.0.0-20250111170820-96e707ad59c1 h1:+U9qAvQyF6+xyVZqGXRABhdcb3W6Mw9IFiLvAJKBAtg=
+github.com/ProtocolScience/AstralGo v0.0.0-20250111170820-96e707ad59c1/go.mod h1:Wg8s7tsAsz9aTzQAcElBf9toTy1vU14AB9xmOiTQv7s=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d h1:/Xuj3fIiMY2ls1TwvPKmaqQrtJsPY+c9s+0lOScVHd8=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d/go.mod h1:2Ie+hdBFQpQFDHfeklgxoFmQRCE7O+KwFpISeXq7OwA=
 github.com/RomiChan/syncx v0.0.0-20221202055724-5f842c53020e h1:wR3MXQ3VbUlPKOOUwLOYgh/QaJThBTYtsl673O3lqSA=
