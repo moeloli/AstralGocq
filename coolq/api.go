@@ -963,6 +963,35 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 	return builder.Main(convertMessage(m))
 }
 
+func (bot *CQBot) CQSetGroupReactionMessage(msgID int64, iconId string, iconType int64, enable bool) global.MSG {
+	m, err := db.GetGroupMessageByGlobalID(int32(msgID))
+	if err != nil {
+		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
+	}
+	groupCode := m.GroupCode
+	seq := m.Attribute.MessageSeq
+	_, err = bot.Client.SetGroupReaction(groupCode, seq, iconId, int32(iconType), enable)
+	action := "取消"
+	if enable {
+		action = "设置"
+	}
+	groupName := ""
+	groupImpl := bot.Client.FindGroup(groupCode)
+	if groupImpl != nil {
+		groupName = groupImpl.Name
+	}
+	if err != nil {
+		log.Warnf("%v群 %v(%v) 的反应消息 (seq %v, iconId %v, iconType %v) 消息失败: 参数可能有问题.", action, groupName, groupCode, seq, iconId, iconType)
+		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
+	}
+	log.Infof("%v群 %v(%v) 的反应消息 (seq %v, iconId %v, iconType %v)", action, groupName, groupCode, seq, iconId, iconType)
+	return OK(global.MSG{
+		"message_id":  msgID,
+		"group_id":    groupCode,
+		"message_seq": seq,
+	})
+}
+
 // CQSendGroupForwardMessage 扩展API-发送合并转发(群)
 //
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E5%90%88%E5%B9%B6%E8%BD%AC%E5%8F%91-%E7%BE%A4

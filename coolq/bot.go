@@ -212,8 +212,7 @@ func removeLocalElement(elements []message.IMessageElement) []message.IMessageEl
 	var j int
 	for i, e := range elements {
 		switch e.(type) {
-		case *msg.LocalImage, *msg.LocalVideo:
-		case *message.VoiceElement: // 未上传的语音消息， 也删除
+		case *msg.LocalImage, *msg.LocalVideo, *msg.LocalVoice:
 		case nil:
 		default:
 			if j < i {
@@ -251,9 +250,9 @@ func (bot *CQBot) uploadMedia(target message.Source, elements []message.IMessage
 					*p = m
 				}
 			})
-		case *message.VoiceElement:
+		case *msg.LocalVoice:
 			w.do(func() {
-				m, err := bot.Client.UploadVoice(target, bytes.NewReader(e.Data))
+				m, err := bot.Client.UploadVoice(target, bytes.NewReader(e.Data), uint32(e.During))
 				if err != nil {
 					log.Warnf(uploadFailedTemplate, source, target.PrimaryID, "语音", err)
 				} else {
@@ -368,7 +367,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	case bot.Client.FindFriend(target) != nil: // 双向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
-			id = bot.InsertPrivateMessage(msg, source)
+			id, _ = bot.InsertPrivateMessage(msg, source)
 		}
 	case ok || groupID != 0: // 临时会话
 		if !base.AllowTempSession {
@@ -406,7 +405,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 	case unidirectionalFriendExists(): // 单向好友
 		msg := bot.Client.SendPrivateMessage(target, m)
 		if msg != nil {
-			id = bot.InsertPrivateMessage(msg, source)
+			id, _ = bot.InsertPrivateMessage(msg, source)
 		}
 	default:
 		nickname := "Unknown"
@@ -433,7 +432,7 @@ func (bot *CQBot) SendGuildChannelMessage(guildID, channelID uint64, m *message.
 			bot.Client.SendGuildMusicShare(guildID, channelID, i)
 			return "-1" // todo: fix this
 
-		case *message.VoiceElement, *msg.Poke:
+		case *msg.LocalVoice, *msg.Poke:
 			log.Warnf("警告: 频道暂不支持发送 %v 消息", i.Type().String())
 			continue
 		}
@@ -497,16 +496,23 @@ func (bot *CQBot) InsertGroupMessage(m *message.GroupMessage, source message.Sou
 	return msg.GlobalID
 }
 
-// InsertPrivateMessage 私聊消息入数据库
-func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage, source message.Source) int32 {
+// InsertPrivateMessage 私聊消息入数据库,返回 id 和 先前是否已存在
+func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage, source message.Source) (int32, bool) {
 	t := &message.SendingMessage{Elements: m.Elements}
 	replyElem := t.FirstOrNil(func(e message.IMessageElement) bool {
 		_, ok := e.(*message.ReplyElement)
 		return ok
 	})
-	msg := &db.StoredPrivateMessage{
+	gid := db.ToGlobalID(m.Sender.Uin, m.Id)
+
+	_, err := db.GetPrivateMessageByGlobalID(gid) //判断是否已经重复存在此消息
+	if err == nil {
+		return gid, true
+	}
+
+	data := &db.StoredPrivateMessage{
 		ID:       encodeMessageID(m.Sender.Uin, m.Id),
-		GlobalID: db.ToGlobalID(m.Sender.Uin, m.Id),
+		GlobalID: gid,
 		SubType:  "normal",
 		Attribute: &db.StoredMessageAttribute{
 			MessageSeq: m.Id,
@@ -526,18 +532,18 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage, source message
 	}
 	if replyElem != nil {
 		reply := replyElem.(*message.ReplyElement)
-		msg.SubType = "quote"
-		msg.QuotedInfo = &db.QuotedInfo{
+		data.SubType = "quote"
+		data.QuotedInfo = &db.QuotedInfo{
 			PrevID:        encodeMessageID(reply.Sender, reply.ReplySeq),
 			PrevGlobalID:  db.ToGlobalID(reply.Sender, reply.ReplySeq),
 			QuotedContent: ToMessageContent(reply.Elements, source),
 		}
 	}
-	if err := db.InsertPrivateMessage(msg); err != nil {
+	if err := db.InsertPrivateMessage(data); err != nil {
 		log.Warnf("记录聊天数据时出现错误: %v", err)
-		return -1
+		return -1, false
 	}
-	return msg.GlobalID
+	return data.GlobalID, false
 }
 
 /*

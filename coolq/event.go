@@ -4,21 +4,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/ProtocolScience/AstralGo/client/pb/database"
-	"net/url"
-	"path"
-	"strconv"
-	"strings"
-
 	"github.com/ProtocolScience/AstralGo/client"
+	"github.com/ProtocolScience/AstralGo/client/pb/database"
 	"github.com/ProtocolScience/AstralGo/message"
 	log "github.com/sirupsen/logrus"
+	"net/url"
+	"strconv"
 
 	"github.com/ProtocolScience/AstralGocq/db"
 	"github.com/ProtocolScience/AstralGocq/global"
 	"github.com/ProtocolScience/AstralGocq/internal/base"
 	"github.com/ProtocolScience/AstralGocq/internal/cache"
-	"github.com/ProtocolScience/AstralGocq/internal/download"
 )
 
 // ToFormattedMessage 将给定[]message.IMessageElement转换为通过coolq.SetMessageFormat所定义的消息上报格式
@@ -80,7 +76,11 @@ func (bot *CQBot) privateMessageEvent(_ *client.QQClient, m *message.PrivateMess
 		PrimaryID:  m.Sender.Uin,
 	}
 	cqm := toStringMessage(m.Elements, source)
-	id := bot.InsertPrivateMessage(m, source)
+	id, exists := bot.InsertPrivateMessage(m, source)
+	if exists { //该消息已存在，过滤
+		log.Debugf("收到重复的好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
+		return
+	}
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.DisplayName(), m.Sender.Uin, cqm, id)
 	typ := "message/private/friend"
 	if m.Sender.Uin == bot.Client.Uin {
@@ -654,6 +654,18 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *client.Group
 func (bot *CQBot) checkMedia(e []message.IMessageElement, _ int64) { //sourceID int64
 	for _, elem := range e {
 		switch i := elem.(type) {
+		case *message.NewTechVoiceElement:
+			i.Url = bot.Client.GetElementVoiceUrl(i)
+			var md5 []byte
+			switch {
+			case i.LegacyFriend != nil:
+				md5 = i.LegacyFriend.Ptt.FileMd5
+			case i.LegacyGroup != nil:
+				md5 = i.LegacyGroup.Ptt.FileMd5
+			default:
+				md5 = i.Md5
+			}
+			i.FileName = hex.EncodeToString(md5) + ".amr" //文件名称. 通常为 `XXX.amr`. 服务器要求文件名后缀必须为 ".amr", 但其[编码方式][codec]也有可能是非 [AudioCodec.AMR].
 		case *message.NewTechImageElement:
 			i.Url = bot.Client.GetElementImageUrl(i)
 			parsedURL, err := url.Parse(i.Url)
@@ -702,17 +714,6 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, _ int64) { //sourceID 
 					ImageType:    i.ImageType,
 				},
 			})
-		case *message.VoiceElement:
-			// todo: don't download original file?
-			i.Name = strings.ReplaceAll(i.Name, "{", "")
-			i.Name = strings.ReplaceAll(i.Name, "}", "")
-			if !global.PathExists(path.Join(global.VoicePath, i.Name)) {
-				err := download.Request{URL: i.Url}.WriteToFile(path.Join(global.VoicePath, i.Name))
-				if err != nil {
-					log.Warnf("语音文件 %v 下载失败: %v", i.Name, err)
-					continue
-				}
-			}
 		case *message.ShortVideoElement:
 			cache.Media.Insert(i.Md5, &database.DatabaseRecord{
 				Video: &database.DatabaseVideo{

@@ -42,3 +42,18 @@ type LocalVideo struct {
 func (e *LocalVideo) Type() message.ElementType {
 	return message.Video
 }
+
+// LocalVoice 本地语音
+type LocalVoice struct {
+	Name   string
+	Md5    []byte
+	Size   int32
+	Url    string
+	Data   []byte
+	During int32
+}
+
+// Type implements the message.IMessageElement.
+func (e *LocalVoice) Type() message.ElementType {
+	return message.Voice
+}

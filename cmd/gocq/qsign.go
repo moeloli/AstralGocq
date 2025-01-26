@@ -102,21 +102,6 @@ func (m *SignServerManager) asyncCheckServers(servers []config.SignServer) *conf
 	var once sync.Once
 	var wg sync.WaitGroup
 
-	// Separate servers based on protocol
-	var wsServers []config.SignServer
-	var httpServers []config.SignServer
-
-	for _, s := range servers {
-		if len(s.URL) < 4 {
-			continue
-		}
-		if strings.HasPrefix(s.URL, "ws") {
-			wsServers = append(wsServers, s)
-		} else if strings.HasPrefix(s.URL, "http") {
-			httpServers = append(httpServers, s)
-		}
-	}
-
 	checkServers := func(servers []config.SignServer) bool {
 		success := false
 		wg.Add(len(servers))
@@ -141,11 +126,7 @@ func (m *SignServerManager) asyncCheckServers(servers []config.SignServer) *conf
 		return success
 	}
 
-	// First, try ws/wss servers
-	if !checkServers(wsServers) {
-		// If all ws/wss servers fail, try http/https servers
-		checkServers(httpServers)
-	}
+	checkServers(servers)
 
 	return m.Get()
 }

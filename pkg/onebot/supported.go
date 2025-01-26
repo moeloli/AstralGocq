@@ -62,6 +62,7 @@ var supportedV11 = []string{
 	"qidian_get_account_info",
 	"reload_event_filter",
 	"send_forward_msg",
+	"set_group_reaction",
 	"send_group_forward_msg",
 	"send_group_msg",
 	"send_group_sign",

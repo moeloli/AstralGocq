@@ -150,12 +150,13 @@ func toElements(e []message.IMessageElement, source message.Source) (r []msg.Ele
 					{K: "id", V: strconv.FormatInt(int64(o.Index), 10)},
 				},
 			}
-		case *message.VoiceElement:
+		case *message.NewTechVoiceElement:
 			m = msg.Element{
 				Type: "record",
 				Data: pairs{
-					{K: "file", V: o.Name},
+					{K: "file", V: o.FileName},
 					{K: "url", V: o.Url},
+					{K: "during", V: strconv.Itoa(int(o.Duration))},
 				},
 			}
 		case *message.ShortVideoElement:
@@ -206,7 +207,7 @@ func toElements(e []message.IMessageElement, source message.Source) (r []msg.Ele
 			default:
 				data := pairs{
 					{K: "file", V: hex.EncodeToString(o.Md5) + ".image"},
-					{K: "url", V: o.DownloadUrl()},
+					{K: "url", V: o.Url},
 				}
 				m = msg.Element{
 					Type: "image",
@@ -338,10 +339,10 @@ func ToMessageContent(e []message.IMessageElement, source message.Source) (r []g
 				"type": "face",
 				"data": global.MSG{"id": o.Index},
 			}
-		case *message.VoiceElement:
+		case *message.NewTechVoiceElement:
 			m = global.MSG{
 				"type": "record",
-				"data": global.MSG{"file": o.Name, "url": o.Url},
+				"data": global.MSG{"file": o.FileName, "url": o.Url, "during": o.Duration},
 			}
 		case *message.ShortVideoElement:
 			m = global.MSG{
@@ -547,7 +548,27 @@ func (bot *CQBot) reply(spec *onebot.Spec, elem msg.Element, sourceType message.
 
 func (bot *CQBot) voice(elem msg.Element) (m any, err error) {
 	f := elem.Get("file")
+	u := elem.Get("url")
+	if f == "" && u == "" {
+		return nil, errors.New("params error")
+	}
+
+	if f == "" {
+		hash := md5.Sum([]byte(u))
+		f = hex.EncodeToString(hash[:]) + ".cache"
+	}
+
+	if os.IsNotExist(err) && u != "" {
+		cacheFile := path.Join(global.VoicePath, f)
+		_, err = os.Stat(cacheFile)
+		err = download.Request{URL: u}.WriteToFile(cacheFile)
+		if err != nil {
+			log.Warnf("语音文件 %v 下载失败: %v", u, err)
+		}
+	}
+
 	data, err := global.FindFile(f, elem.Get("cache"), global.VoicePath)
+	voiceTime, _ := strconv.ParseInt(elem.Get("during"), 10, 32)
 	if err != nil {
 		return nil, err
 	}
@@ -561,7 +582,10 @@ func (bot *CQBot) voice(elem msg.Element) (m any, err error) {
 			return nil, err
 		}
 	}
-	return &message.VoiceElement{Data: data}, nil
+	if voiceTime == 0 {
+		voiceTime, err = global.GetSilkFileDuration(bytes.NewReader(data), 20)
+	}
+	return &msg.LocalVoice{Data: data, During: int32(voiceTime)}, nil
 }
 
 func (bot *CQBot) at(id, name string) (m any, err error) {
@@ -700,7 +724,7 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 		if err != nil {
 			return nil, err
 		}
-		return &message.VoiceElement{Data: base.ResampleSilk(data)}, nil
+		return &msg.LocalVoice{Data: base.ResampleSilk(data)}, nil
 	case "face":
 		id, err := strconv.Atoi(elem.Get("id"))
 		if err != nil {

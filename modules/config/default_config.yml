@@ -43,8 +43,14 @@ account: # 账号相关
       authorization: '-'   # authorization 内容, 依服务端设置，如 'Bearer xxxx'
     - url: 'https://qsign-v3.trpgbot.com'  # 备用
       key: 'selfshare'
-      authorization: '-' 
+      authorization: '-'
+    - url: 'wss://qsign-v3.trpgbot.com/ws'  # 备用
+      key: 'selfshare'
+      authorization: '-'
     - url: 'https://zyr15r-astralqsign.hf.space'  # 备用
+      key: 'selfshare'
+      authorization: '-'
+    - url: 'wss://qsign.chahuyun.cn/ws'  # 备用
       key: 'selfshare'
       authorization: '-'
     - url: 'https://qsign.chahuyun.cn'  # 备用

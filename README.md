@@ -188,21 +188,22 @@ Astral-Gocq 兼容 [OneBot-v11](https://github.com/botuniverse/onebot-11) 绝大
 
 #### 拓展 API 及与 OneBot 标准有略微差异的 API
 
-| 拓展 API                    | 功能                   |
-| --------------------------- | ---------------------- |
-| /set_group_portrait         | [设置群头像]           |
-| /get_image                  | [获取图片信息]         |
-| /get_msg                    | [获取消息]             |
-| /get_forward_msg            | [获取合并转发内容]     |
-| /send_group_forward_msg     | [发送合并转发(群)]     |
-| /.get_word_slices           | [获取中文分词]         |
-| /.ocr_image                 | [图片 OCR]             |
-| /get_group_system_msg       | [获取群系统消息]       |
-| /get_group_file_system_info | [获取群文件系统信息]   |
+| 拓展 API                      | 功能           |
+|-----------------------------|--------------|
+| /set_group_portrait         | [设置群头像]      |
+| /get_image                  | [获取图片信息]     |
+| /get_msg                    | [获取消息]       |
+| /get_forward_msg            | [获取合并转发内容]   |
+| /send_group_forward_msg   <br/>  | [发送合并转发(群)]  |
+| /.get_word_slices           | [获取中文分词]     |
+| /.ocr_image                 | [图片 OCR]     |
+| /get_group_system_msg       | [获取群系统消息]    |
+| /get_group_file_system_info | [获取群文件系统信息]  |
 | /get_group_root_files       | [获取群根目录文件列表] |
 | /get_group_files_by_folder  | [获取群子目录文件列表] |
-| /get_group_file_url         | [获取群文件资源链接]   |
-| /get_status                 | [获取状态]             |
+| /get_group_file_url         | [获取群文件资源链接]  |
+| /get_status                 | [获取状态]       |
+| /set_group_reaction         | [发送反应消息]     |
 
 [设置群头像]: https://docs.go-cqhttp.org/api/#%E8%AE%BE%E7%BD%AE%E7%BE%A4%E5%A4%B4%E5%83%8F
 [获取图片信息]: https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E5%9B%BE%E7%89%87%E4%BF%A1%E6%81%AF

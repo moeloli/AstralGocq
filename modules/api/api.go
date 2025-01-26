@@ -36,6 +36,23 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 			p0 := p.Get("group_id").Int()
 			p1 := p.Get("messages")
 			return c.bot.CQSendGroupForwardMessage(p0, p1)
+		case "set_group_reaction":
+			p0 := p.Get("message_id").Int()
+			p1 := p.Get("icon_id").String()
+
+			t2 := p.Get("icon_type")
+			p2 := int64(2)
+			if t2.Exists() {
+				p2 = t2.Int()
+			}
+
+			t3 := p.Get("is_add")
+			p3 := true
+			if t3.IsBool() {
+				p3 = t3.Bool()
+			}
+
+			return c.bot.CQSetGroupReactionMessage(p0, p1, p2, p3)
 		case "send_group_msg":
 			p0 := p.Get("group_id").Int()
 			p1 := p.Get("message")
