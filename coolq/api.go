@@ -969,6 +969,7 @@ func (bot *CQBot) CQSendIntimateSpaceSign() global.MSG {
 	return OK(nil)
 }
 
+// CQSetGroupReactionMessage 发送群反应emoji小贴图（开发中）
 func (bot *CQBot) CQSetGroupReactionMessage(msgID int64, iconID string, iconType int64, enable bool) global.MSG {
 	m, err := db.GetGroupMessageByGlobalID(int32(msgID))
 	if err != nil {
