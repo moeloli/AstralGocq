@@ -9,6 +9,7 @@ WORKDIR /build
 COPY ./ .
 
 RUN set -ex \
+    && mkdir -p /build && \
     && cd /build \
     && go build -ldflags "-s -w -extldflags '-static'" -o cqhttp
 
