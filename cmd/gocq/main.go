@@ -263,8 +263,6 @@ func LoginInteract() {
 		os.Exit(0)
 	}
 
-	cli.InitWait.Add(1)
-
 	// 加载本地版本信息, 一般是在上次登录时保存的
 	versionFile := path.Join(global.VersionsPath, fmt.Sprint(int(cli.Device().Protocol))+".json")
 	if global.PathExists(versionFile) {
@@ -438,7 +436,7 @@ func LoginInteract() {
 	servers.Run(coolq.NewQQBot(cli))
 	log.Info("资源初始化完成, 开始处理信息.")
 	log.Info("アトリは、高性能ですから!")
-	cli.InitWait.Done() //通知组件，所有的东西已经全部加载完毕
+	cli.InitWait.Broadcast() //通知组件，所有的东西已经全部加载完毕
 }
 
 // WaitSignal 在新线程检查更新和网络并等待信号, 必须在 InitBase, PrepareData, LoginInteract 之后执行
