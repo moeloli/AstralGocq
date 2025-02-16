@@ -4,8 +4,8 @@ github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b h1:tvciXWq2nuvTbFeJG
 github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b/go.mod h1:fHZFWGquNXuHttu9dUYoKuNbm3dzLETnIOnm1muSfDs=
 github.com/Microsoft/go-winio v0.6.2-0.20230724192519-b29bbd58a65a h1:aU1703IHxupjzipvhu16qYKLMR03e+8WuNR+JMsKfGU=
 github.com/Microsoft/go-winio v0.6.2-0.20230724192519-b29bbd58a65a/go.mod h1:OZqLNXdYJHmx7aqq/T6wAdFEdoGm5nmIfC4kU7M8P8o=
-github.com/ProtocolScience/AstralGo v0.0.0-20250215153509-f0d3ef93701d h1:CJNOUXreU6rlBh1T64HCfcJkec6OtNtxOvyAK1FNRnc=
-github.com/ProtocolScience/AstralGo v0.0.0-20250215153509-f0d3ef93701d/go.mod h1:Wg8s7tsAsz9aTzQAcElBf9toTy1vU14AB9xmOiTQv7s=
+github.com/ProtocolScience/AstralGo v0.0.0-20250216032422-fd1f496e320e h1:+2Kit7RC6JY39Oe/Hvm0lZbPGgNfvLhtvN3uDzbUIiw=
+github.com/ProtocolScience/AstralGo v0.0.0-20250216032422-fd1f496e320e/go.mod h1:Wg8s7tsAsz9aTzQAcElBf9toTy1vU14AB9xmOiTQv7s=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d h1:/Xuj3fIiMY2ls1TwvPKmaqQrtJsPY+c9s+0lOScVHd8=
 github.com/RomiChan/protobuf v0.1.1-0.20230204044148-2ed269a2e54d/go.mod h1:2Ie+hdBFQpQFDHfeklgxoFmQRCE7O+KwFpISeXq7OwA=
 github.com/RomiChan/syncx v0.0.0-20221202055724-5f842c53020e h1:wR3MXQ3VbUlPKOOUwLOYgh/QaJThBTYtsl673O3lqSA=
