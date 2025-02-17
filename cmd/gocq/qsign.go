@@ -201,7 +201,12 @@ func NewSignClient(c *client.QQClient) *SignClient {
 	signClient.manager = NewSignServerManager(signClient)
 	return signClient
 }
-
+func (c *SignClient) resetWebsocket() {
+	c.requestMu.Lock()
+	_ = c.ws.Close()
+	c.ws = nil // Reset connection
+	c.requestMu.Unlock()
+}
 func (c *SignClient) requestSignServer(action string, data map[string]string) (string, []byte, error) {
 	i := 0
 	for {
@@ -267,6 +272,7 @@ func (c *SignClient) requestSignServer(action string, data map[string]string) (s
 
 func (c *SignClient) requestWebSocket(signServer *config.SignServer, action string, data map[string]string) ([]byte, error) {
 	// Establish WebSocket connection if not connected
+	c.requestMu.Lock()
 	if c.ws == nil {
 		header := http.Header{}
 		network, address := server.ResolveURI(signServer.URL)
@@ -292,6 +298,7 @@ func (c *SignClient) requestWebSocket(signServer *config.SignServer, action stri
 		c.ws = conn
 		go c.listenResponses() // Start listening for responses
 	}
+	c.requestMu.Unlock()
 
 	// Generate a unique echo UUID
 	echoUUID := uuid.New().String()
@@ -315,8 +322,7 @@ func (c *SignClient) requestWebSocket(signServer *config.SignServer, action stri
 	}
 	c.requestMu.Unlock()
 	if err != nil {
-		_ = c.ws.Close()
-		c.ws = nil // Reset connection
+		c.resetWebsocket()
 		return nil, err
 	}
 	// Set a timeout duration
@@ -328,9 +334,9 @@ func (c *SignClient) requestWebSocket(signServer *config.SignServer, action stri
 		delete(c.requests, echoUUID)
 		c.requestMu.Unlock()
 		// Extract payload
-		payload, err := json.Marshal(response["payload"])
-		if err != nil {
-			return nil, err
+		payload, e := json.Marshal(response["payload"])
+		if e != nil {
+			return nil, e
 		}
 		return payload, nil
 	case <-time.After(timeout):
@@ -338,6 +344,7 @@ func (c *SignClient) requestWebSocket(signServer *config.SignServer, action stri
 		c.requestMu.Lock()
 		delete(c.requests, echoUUID)
 		c.requestMu.Unlock()
+		c.resetWebsocket()
 		return nil, errors.New("operation timed out in qsign websocket request")
 	}
 }
@@ -345,9 +352,22 @@ func (c *SignClient) requestWebSocket(signServer *config.SignServer, action stri
 func (c *SignClient) listenResponses() {
 	for {
 		var response map[string]interface{}
-		err := c.ws.ReadJSON(&response)
+		// ReadJSON in a function that sets c.ws to nil and panics on error
+		err := func() error {
+			defer func() {
+				recover()
+			}()
+			err := c.ws.ReadJSON(&response)
+			if err != nil {
+				return err
+			}
+			return nil
+		}()
 		if err != nil {
-			return
+			break
+		}
+		if response == nil {
+			break
 		}
 
 		// Handle the response
@@ -363,6 +383,7 @@ func (c *SignClient) listenResponses() {
 		}
 		c.requestMu.Unlock()
 	}
+	c.resetWebsocket()
 }
 
 func (c *SignClient) signRequest(seq uint64, uin string, cmd string, buff []byte) (sign []byte, extra []byte, token []byte, err error) {
