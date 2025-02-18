@@ -203,8 +203,10 @@ func NewSignClient(c *client.QQClient) *SignClient {
 }
 func (c *SignClient) resetWebsocket() {
 	c.requestMu.Lock()
-	_ = c.ws.Close()
-	c.ws = nil // Reset connection
+	if c.ws != nil {
+		_ = c.ws.Close()
+		c.ws = nil // Reset connection
+	}
 	c.requestMu.Unlock()
 }
 func (c *SignClient) requestSignServer(action string, data map[string]string) (string, []byte, error) {
