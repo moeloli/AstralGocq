@@ -273,8 +273,22 @@ func (c *SignClient) requestSignServer(action string, data map[string]string) (s
 }
 
 func (c *SignClient) requestWebSocket(signServer *config.SignServer, action string, data map[string]string) ([]byte, error) {
-	// Establish WebSocket connection if not connected
+	// Generate a unique echo UUID
+	echoUUID := uuid.New().String()
+
+	// Prepare JSON message
+	message := map[string]interface{}{
+		"type":   action,
+		"params": data,
+		"echo":   echoUUID,
+	}
+
+	// Create a channel to wait for the response
+	responseChan := make(chan map[string]interface{})
+
+	// Register the request
 	c.requestMu.Lock()
+
 	if c.ws == nil {
 		header := http.Header{}
 		network, address := server.ResolveURI(signServer.URL)
@@ -300,23 +314,7 @@ func (c *SignClient) requestWebSocket(signServer *config.SignServer, action stri
 		c.ws = conn
 		go c.listenResponses() // Start listening for responses
 	}
-	c.requestMu.Unlock()
 
-	// Generate a unique echo UUID
-	echoUUID := uuid.New().String()
-
-	// Prepare JSON message
-	message := map[string]interface{}{
-		"type":   action,
-		"params": data,
-		"echo":   echoUUID,
-	}
-
-	// Create a channel to wait for the response
-	responseChan := make(chan map[string]interface{})
-
-	// Register the request
-	c.requestMu.Lock()
 	// Send message
 	err := c.ws.WriteJSON(message)
 	if err == nil {
