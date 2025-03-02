@@ -44,6 +44,8 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
   ·
   <a href="https://github.com/ProtocolScience/AstralGocq/blob/master/CONTRIBUTING.md">参与贡献</a>
 </p>
+## 用户交流群号
+1036988407
 
 ## 兼容性
 Astral-Gocq 兼容 [OneBot-v11](https://github.com/botuniverse/onebot-11) 绝大多数内容，并在其基础上做了一些扩展，详情请看的文档。
