@@ -44,6 +44,7 @@ _✨ 基于 [Mirai](https://github.com/mamoe/mirai) 以及 [MiraiGo](https://git
   ·
   <a href="https://github.com/ProtocolScience/AstralGocq/blob/master/CONTRIBUTING.md">参与贡献</a>
 </p>
+
 ## 用户交流群号
 1036988407
 
